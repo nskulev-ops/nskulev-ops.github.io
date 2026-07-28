@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Главный воздух России</title>
+
+  <!-- Иконки социальных сетей -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+  />
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: white;
+      overflow-x: hidden;
+
+      /* Первое прикреплённое изображение — фон */
+      background:
+        linear-gradient(rgba(0, 0, 0, 0.58), rgba(0, 0, 0, 0.75)),
+        url("photo_2026-07-28_10-16-06.jpg") center / cover fixed no-repeat;
+    }
+
+    /* Общая обёртка страницы */
+    .app-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 0;
+    }
+
+    /* Контейнер с секциями: на мобильной версии переключается свайпом */
+    .pager {
+      display: flex;
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .pager::-webkit-scrollbar {
+      display: none;
+    }
+
+    .page {
+      flex: 0 0 100%;
+      width: 100%;
+      scroll-snap-align: start;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 0 24px;
+    }
+
+    /* Точки-индикаторы переключения секций (только мобильная версия) */
+    .pager-dots {
+      display: flex;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      padding: 0;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.35);
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .dot.active {
+      background: #ffffff;
+      transform: scale(1.3);
+    }
+
+    .profile {
+      width: min(100%, 450px);
+      padding: 36px 28px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 24px;
+      background: rgba(10, 10, 10, 0.80);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+    }
+
+    .avatar {
+      width: 130px;
+      height: 130px;
+      margin: 0 auto 18px;
+      overflow: hidden;
+      border: 4px solid white;
+      border-radius: 50%;
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.7);
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      letter-spacing: 0.5px;
+    }
+
+    .subtitle {
+      margin: 9px 0 26px;
+      color: #d1d5db;
+      font-size: 15px;
+    }
+
+    .links {
+      display: grid;
+      gap: 12px;
+    }
+
+    .links a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      min-height: 54px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 17px;
+      font-weight: 700;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.28);
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    .links a:hover {
+      transform: translateY(-3px) scale(1.02);
+      filter: brightness(1.12);
+    }
+
+    .links i {
+      width: 24px;
+      font-size: 22px;
+      text-align: center;
+    }
+
+    /* Цвета кнопок в стиле соцсетей */
+    .telegram {
+      background: #229ED9;
+    }
+
+    .steam {
+      background: #171a21;
+    }
+
+    .discord {
+      background: #5865F2;
+    }
+
+    .vk {
+      background: #0077FF;
+    }
+
+    .gmail {
+      background: #EA4335;
+    }
+
+    .pinterest {
+      background: #E60023;
+    }
+
+    .spotify {
+      background: #1DB954;
+    }
+
+    .instagram {
+      background: linear-gradient(
+        135deg,
+        #833AB4,
+        #FD1D1D,
+        #FCAF45
+      );
+    }
+
+    .donate-section {
+      margin-top: 26px;
+      padding: 24px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 18px;
+      background: linear-gradient(
+        135deg,
+        rgba(124, 58, 237, 0.45),
+        rgba(236, 72, 153, 0.30)
+      );
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+    }
+
+    .donate-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      color: #ffffff;
+      font-size: 22px;
+      background: linear-gradient(135deg, #ec4899, #f97316);
+      box-shadow: 0 6px 18px rgba(236, 72, 153, 0.45);
+    }
+
+    .donate-section h2 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .donate-section p {
+      margin: 11px 0 18px;
+      color: #f3e8ff;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .donate-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 52px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ec4899, #f97316);
+      box-shadow: 0 7px 18px rgba(236, 72, 153, 0.38);
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    .donate-button:hover {
+      transform: translateY(-3px) scale(1.02);
+      filter: brightness(1.1);
+    }
+
+    footer {
+      margin-top: 25px;
+      color: #d1d5db;
+      font-size: 13px;
+    }
+
+    /* Вторая секция — сюда будут добавляться следующие виджеты */
+    .widgets-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: min(100%, 450px);
+    }
+
+    .widget-card {
+      padding: 30px 24px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 20px;
+      background: rgba(10, 10, 10, 0.80);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+    }
+
+    .widget-card h2 {
+      margin: 0 0 10px;
+      font-size: 22px;
+    }
+
+    .widget-card p {
+      margin: 0;
+      color: #d1d5db;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* Виджет-часы */
+    .clock-widget {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .clock-city {
+      margin: 0 0 16px;
+      font-size: 18px;
+    }
+
+    .clock-face {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.10), rgba(0, 0, 0, 0.35));
+      border: 3px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45), inset 0 0 18px rgba(0, 0, 0, 0.4);
+    }
+
+    .clock-dot {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.75);
+    }
+
+    .clock-dot.dot-12 {
+      top: 9px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .clock-dot.dot-6 {
+      bottom: 9px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .clock-dot.dot-3 {
+      right: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .clock-dot.dot-9 {
+      left: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .clock-hand {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform-origin: 50% 100%;
+      border-radius: 4px;
+    }
+
+    .clock-hand.hour {
+      width: 4px;
+      height: 38px;
+      margin-top: -38px;
+      margin-left: -2px;
+      background: #ffffff;
+    }
+
+    .clock-hand.minute {
+      width: 3px;
+      height: 54px;
+      margin-top: -54px;
+      margin-left: -1.5px;
+      background: #d1d5db;
+    }
+
+    .clock-hand.second {
+      width: 2px;
+      height: 60px;
+      margin-top: -60px;
+      margin-left: -1px;
+      background: #ec4899;
+    }
+
+    .clock-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      margin-top: -5px;
+      margin-left: -5px;
+      border-radius: 50%;
+      background: #ec4899;
+      box-shadow: 0 0 6px rgba(236, 72, 153, 0.8);
+      z-index: 2;
+    }
+
+    .clock-digital {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #f3e8ff;
+    }
+
+    /* Виджет-кнопка мини-игры */
+    .game-widget .widget-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      color: #ffffff;
+      font-size: 22px;
+      background: linear-gradient(135deg, #6366f1, #22d3ee);
+      box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45);
+    }
+
+    .game-widget p {
+      margin: 11px 0 18px;
+    }
+
+    .game-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 52px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #6366f1, #22d3ee);
+      box-shadow: 0 7px 18px rgba(99, 102, 241, 0.38);
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    .game-button:hover {
+      transform: translateY(-3px) scale(1.02);
+      filter: brightness(1.1);
+    }
+
+    /* Виджет музыкального плеера */
+    .player-widget h2 {
+      margin-bottom: 16px;
+    }
+
+    .player-cover {
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 14px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55);
+    }
+
+    .player-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .player-track-name {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .player-track-artist {
+      margin: 4px 0 18px;
+      font-size: 13px;
+      color: #d1d5db;
+    }
+
+    .player-progress {
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .player-progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #6366f1, #ec4899);
+    }
+
+    .player-times {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    .player-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .player-btn {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: none;
+      border-radius: 50%;
+      color: #ffffff;
+      font-size: 15px;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.12);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .player-btn:hover {
+      transform: scale(1.08);
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .player-btn.main {
+      width: 54px;
+      height: 54px;
+      font-size: 18px;
+      background: linear-gradient(135deg, #6366f1, #ec4899);
+    }
+
+    .player-counter {
+      margin: 14px 0 0;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    /* Компьютерная версия: виджеты отдельными секциями по бокам от основной, без свайпа */
+    @media (min-width: 900px) {
+      .pager {
+        overflow: visible;
+        scroll-snap-type: none;
+        width: auto;
+        align-items: flex-start;
+        gap: 28px;
+      }
+
+      .page {
+        flex: 0 0 auto;
+        width: auto;
+        padding: 0;
+      }
+
+      .pager-dots {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-shell">
+    <div class="pager" id="pager">
+
+      <!-- Основная заглавная секция -->
+      <section class="page main-page">
+        <main class="profile">
+          <div class="avatar">
+            <!-- Второе прикреплённое изображение — аватар -->
+            <img src="photo_2026-07-28_10-16-08.jpg" alt="Аватар профиля" />
+          </div>
+
+          <!-- Здесь можно поменять имя -->
+          <h1>tyol</h1>
+
+          <p class="subtitle">Улыбка, малыш, улыбка, лучшее, что есть в человеке.</p>
+
+          <nav class="links">
+            <a class="telegram" href="https://t.me/h8_y0u" target="_blank" rel="noopener noreferrer">
+              <i class="fa-brands fa-telegram"></i>
+              Telegram
+            </a>
+
+            <a class="steam" href="https://steamcommunity.com/profiles/76561198999543454/" target="_blank" rel="noopener noreferrer">
+              <i class="fa-brands fa-steam"></i>
+              Steam
+            </a>
+
+            <a class="discord" href="https://discord.com/users/rin6180" target="_blank" rel="noopener noreferrer">
+              <i class="fa-brands fa-discord"></i>
+              Discord
+            </a>
+
+            <a class="vk" href="https://vk.com/flow_bi7" target="_blank" rel="noopener noreferrer">
+              <i class="fa-brands fa-vk"></i>
+              ВКонтакте
+            </a>
+
+            <a class="gmail" href="mailto:nskulev@gmail.com">
+              <i class="fa-solid fa-envelope"></i>
+              Gmail
+            </a>
+
+            <a class="pinterest" href="https://ru.pinterest.com/nskulev/?invite_code=2830fc12dda84608aed284c3e5bb2306&sender=826481106525326715" target="_blank" rel="noopener noreferrer">
+              <i class="fa-brands fa-pinterest"></i>
+              Pinterest
+            </a>
+
+            <a class="spotify" href="https://open.spotify.com/user/31vqjarjddyc2igzzvq4iws3ybee?si=szbfJcI-SQ2aoyITJ_g0pQ&utm_source=copy-link" target="_blank" rel="noopener noreferrer">
+              <i class="fa-brands fa-spotify"></i>
+              Spotify
+            </a>
+
+            <a class="instagram" href="https://www.instagram.com/chepy.ha67/" target="_blank" rel="noopener noreferrer">
+              <i class="fa-brands fa-instagram"></i>
+              Instagram
+            </a>
+          </nav>
+
+          <section class="donate-section">
+            <div class="donate-icon">
+              <i class="fa-solid fa-heart"></i>
+            </div>
+
+            <h2>Депнуть</h2>
+
+            <!-- Здесь напишите цель сбора -->
+            <p>
+              Бля буду не на казик.
+            </p>
+
+            <!-- Вставьте вместо YOUR_DONATE_LINK свою ссылку на донат -->
+            <a
+              class="donate-button"
+              href="https://donatepay.ru/don/1518592"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <i class="fa-solid fa-hand-holding-heart"></i>
+              Въебать все бабки
+            </a>
+          </section>
+
+          <footer>© 2026 воздух</footer>
+        </main>
+      </section>
+
+      <!-- Вторая секция — сюда будут добавляться следующие виджеты -->
+      <section class="page widgets-page">
+        <div class="widgets-stack" id="widgetsStack">
+
+          <!-- Часы — Москва -->
+          <div class="widget-card clock-widget">
+            <h2 class="clock-city">UTC+3</h2>
+            <div class="clock-face">
+              <span class="clock-dot dot-12"></span>
+              <span class="clock-dot dot-3"></span>
+              <span class="clock-dot dot-6"></span>
+              <span class="clock-dot dot-9"></span>
+              <div class="clock-hand hour" id="msk-hour"></div>
+              <div class="clock-hand minute" id="msk-minute"></div>
+              <div class="clock-hand second" id="msk-second"></div>
+              <div class="clock-center"></div>
+            </div>
+            <p class="clock-digital" id="msk-digital">00:00:00</p>
+          </div>
+
+          <!-- Часы — Москва +1 -->
+          <div class="widget-card clock-widget">
+            <h2 class="clock-city">UTC+4</h2>
+            <div class="clock-face">
+              <span class="clock-dot dot-12"></span>
+              <span class="clock-dot dot-3"></span>
+              <span class="clock-dot dot-6"></span>
+              <span class="clock-dot dot-9"></span>
+              <div class="clock-hand hour" id="msk1-hour"></div>
+              <div class="clock-hand minute" id="msk1-minute"></div>
+              <div class="clock-hand second" id="msk1-second"></div>
+              <div class="clock-center"></div>
+            </div>
+            <p class="clock-digital" id="msk1-digital">00:00:00</p>
+          </div>
+
+          <!-- Кнопка-ссылка на мини-игру -->
+          <div class="widget-card game-widget">
+            <div class="widget-icon">
+              <i class="fa-solid fa-gamepad"></i>
+            </div>
+            <h2>Пивасик</h2>
+            <p>Бюджет на игру составлял пол пачки кириешек с беконом</p>
+            <a class="game-button" href="game.html">
+              <i class="fa-solid fa-play"></i>
+              Играть
+            </a>
+          </div>
+
+          <!-- Музыкальный плеер -->
+          <div class="widget-card player-widget">
+            <h2>Плеер</h2>
+
+            <div class="player-cover">
+              <img id="playerCover" src="covers/Снимок экрана 2026-07-28 160301.png" alt="Обложка трека" />
+            </div>
+
+            <p class="player-track-name" id="playerTrackName">Название</p>
+            <p class="player-track-artist" id="playerTrackArtist">Исполнитель</p>
+
+            <div class="player-progress" id="playerProgress">
+              <div class="player-progress-fill" id="playerProgressFill"></div>
+            </div>
+
+            <div class="player-times">
+              <span id="playerCurrentTime">0:00</span>
+              <span id="playerDuration">0:00</span>
+            </div>
+
+            <div class="player-controls">
+              <button class="player-btn" id="playerPrev" type="button" aria-label="Предыдущий трек">
+                <i class="fa-solid fa-backward-step"></i>
+              </button>
+              <button class="player-btn main" id="playerPlay" type="button" aria-label="Играть">
+                <i class="fa-solid fa-play"></i>
+              </button>
+              <button class="player-btn" id="playerNext" type="button" aria-label="Следующий трек">
+                <i class="fa-solid fa-forward-step"></i>
+              </button>
+            </div>
+
+            <p class="player-counter" id="playerCounter">Трек 1 из 10</p>
+
+            <!-- Замените src в массиве tracks в <script> на свои файлы -->
+            <audio id="playerAudio" preload="metadata"></audio>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Индикатор страниц — виден только на мобильной версии -->
+    <div class="pager-dots" id="pagerDots">
+      <button class="dot active" type="button" data-index="0" aria-label="Главная страница"></button>
+      <button class="dot" type="button" data-index="1" aria-label="Виджеты"></button>
+    </div>
+  </div>
+
+  <script>
+    const pager = document.getElementById('pager');
+    const dots = document.querySelectorAll('#pagerDots .dot');
+
+    dots.forEach((dot) => {
+      dot.addEventListener('click', () => {
+        const index = Number(dot.dataset.index);
+        pager.scrollTo({ left: pager.clientWidth * index, behavior: 'smooth' });
+      });
+    });
+
+    pager.addEventListener('scroll', () => {
+      if (pager.clientWidth === 0) return;
+      const index = Math.round(pager.scrollLeft / pager.clientWidth);
+      dots.forEach((dot, i) => dot.classList.toggle('active', i === index));
+    });
+  </script>
+
+  <!-- Логика часов: Москва (UTC+3) и Москва +1 (UTC+4) -->
+  <script>
+    function getShiftedNow(extraHours) {
+      const now = new Date();
+      // now.getTime() — это всегда UTC-миллисекунды, поэтому просто добавляем часы
+      const ms = now.getTime() + (3 + extraHours) * 60 * 60 * 1000;
+      return new Date(ms);
+    }
+
+    function pad(n) {
+      return String(n).padStart(2, '0');
+    }
+
+    function updateClock(prefix, extraHours) {
+      const d = getShiftedNow(extraHours);
+      // Читаем UTC-поля, так как мы уже сдвинули время на нужное число часов
+      const h = d.getUTCHours();
+      const m = d.getUTCMinutes();
+      const s = d.getUTCSeconds();
+
+      const hourDeg = (h % 12) * 30 + m * 0.5;
+      const minDeg = m * 6 + s * 0.1;
+      const secDeg = s * 6;
+
+      const hourHand = document.getElementById(prefix + '-hour');
+      const minuteHand = document.getElementById(prefix + '-minute');
+      const secondHand = document.getElementById(prefix + '-second');
+      const digital = document.getElementById(prefix + '-digital');
+
+      if (hourHand) hourHand.style.transform = 'rotate(' + hourDeg + 'deg)';
+      if (minuteHand) minuteHand.style.transform = 'rotate(' + minDeg + 'deg)';
+      if (secondHand) secondHand.style.transform = 'rotate(' + secDeg + 'deg)';
+      if (digital) digital.textContent = pad(h) + ':' + pad(m) + ':' + pad(s);
+    }
+
+    function tickClocks() {
+      updateClock('msk', 0);
+      updateClock('msk1', 1);
+    }
+
+    tickClocks();
+    setInterval(tickClocks, 1000);
+  </script>
+
+  <!-- Логика музыкального плеера на 10 треков -->
+  <script>
+    // Замените title, artist, src и cover на свои файлы.
+    // Аудиофайлы кладите в папку tracks/, обложки — в папку covers/, рядом с index.html.
+    const tracks = [
+      { title: 'ПЕСНЯ ПРО ПИВО', artist: 'ЯРЧЕ СОЛНЦА', src: 'tracks/YaRChE_SOLNCA_PESNYa_PRO_PIVO.mp3', cover: 'covers/Снимок экрана 2026-07-28 160301.png' },
+      { title: 'Ты любишь танцевать', artist: 'CUPSIZE', src: 'tracks/CUPSIZE_-_ty_lyubish_tancevat_76775527.mp3', cover: 'covers/orig.jpg' },
+      { title: 'Красавица', artist: 'ЯРЧЕ СОЛНЦА', src: 'tracks/YARCHE_SOLNCA_-_Krasavica_b64f0d209.mp3', cover: 'covers/unnamed.jpg' },
+      { title: 'Юра Юра', artist: 'CUPSIZE', src: 'tracks/CUPSIZE_-_YUra_YUra_77405965.mp3', cover: 'covers/pic.jpg' },
+      { title: 'Wasted', artist: 'IVOXYGEN', src: 'tracks/ivoxygen_-_WASTED_76778359.mp3', cover: 'covers/m1000x1000.jpg' },
+      { title: 'WOOPAAA', artist: 'GORILLA GLUE, LIL NAKUR', src: 'tracks/GORILLA_GLUE_LIL_NAKUR_-_WOOPAAA_80744529.mp3', cover: 'covers/pic (1).jpg' },
+      { title: 'ИМЯ 505', artist: 'Время и стекло', src: 'tracks/Vremya_i_Steklo_-_Imya_505_47835225.mp3', cover: 'covers/i (1).jpg' },
+      { title: 'Where is my mind?', artist: 'Pixies', src: 'tracks/Pixies_-_Where_Is_My_Mind_76785248.mp3', cover: 'covers/artworks-000111414600-rv5jh8-t500x500.jpg' },
+      { title: 'Сайт', artist: 'Раковая Выхухоль', src: 'tracks/Rakovaya_Vykhukhol_-_Sajjt_79880852.mp3', cover: 'covers/artworks-iuj6qKnzTeWggXlw-mo4azw-t500x500.jpg' },
+      { title: 'Замигает свет', artist: 'ВЛАД ПИВО, kentukki', src: 'tracks/vlad_pivo_KENTUKKI_Merryattack_-_Zamigaet_svet_78474248.mp3', cover: 'covers/m1000x1000 (1).jpg' }
+    ];
+
+    let currentTrack = 0;
+
+    const audio = document.getElementById('playerAudio');
+    const coverImg = document.getElementById('playerCover');
+    const trackNameEl = document.getElementById('playerTrackName');
+    const trackArtistEl = document.getElementById('playerTrackArtist');
+    const playBtn = document.getElementById('playerPlay');
+    const prevBtn = document.getElementById('playerPrev');
+    const nextBtn = document.getElementById('playerNext');
+    const progressBar = document.getElementById('playerProgress');
+    const progressFill = document.getElementById('playerProgressFill');
+    const currentTimeEl = document.getElementById('playerCurrentTime');
+    const durationEl = document.getElementById('playerDuration');
+    const counterEl = document.getElementById('playerCounter');
+
+    function formatTime(sec) {
+      if (!isFinite(sec) || sec < 0) return '0:00';
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return m + ':' + pad(s);
+    }
+
+    function loadTrack(index, autoplay) {
+      currentTrack = (index + tracks.length) % tracks.length;
+      const track = tracks[currentTrack];
+
+      audio.src = track.src;
+      coverImg.src = track.cover;
+      trackNameEl.textContent = track.title;
+      trackArtistEl.textContent = track.artist;
+      counterEl.textContent = 'Трек ' + (currentTrack + 1) + ' из ' + tracks.length;
+      progressFill.style.width = '0%';
+      currentTimeEl.textContent = '0:00';
+      durationEl.textContent = '0:00';
+
+      if (autoplay) {
+        audio.play().catch(() => {});
+      }
+    }
+
+    playBtn.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play().catch(() => {});
+      } else {
+        audio.pause();
+      }
+    });
+
+    audio.addEventListener('play', () => {
+      playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+    });
+
+    audio.addEventListener('pause', () => {
+      playBtn.innerHTML = '<i class="fa-solid fa-play"></i>';
+    });
+
+    audio.addEventListener('timeupdate', () => {
+      if (audio.duration) {
+        progressFill.style.width = (audio.currentTime / audio.duration) * 100 + '%';
+        currentTimeEl.textContent = formatTime(audio.currentTime);
+      }
+    });
+
+    audio.addEventListener('loadedmetadata', () => {
+      durationEl.textContent = formatTime(audio.duration);
+    });
+
+    audio.addEventListener('ended', () => {
+      loadTrack(currentTrack + 1, true);
+    });
+
+    prevBtn.addEventListener('click', () => loadTrack(currentTrack - 1, !audio.paused));
+    nextBtn.addEventListener('click', () => loadTrack(currentTrack + 1, !audio.paused));
+
+    progressBar.addEventListener('click', (e) => {
+      const rect = progressBar.getBoundingClientRect();
+      const ratio = (e.clientX - rect.left) / rect.width;
+      if (audio.duration) {
+        audio.currentTime = ratio * audio.duration;
+      }
+    });
+
+    loadTrack(0, false);
+  </script>
+</body>
+</html>

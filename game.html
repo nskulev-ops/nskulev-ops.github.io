@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Мини-игра</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #0a0a0f;
+    }
+
+    body {
+      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    }
+
+    .game-wrap {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #1e1b4b 0%, #0a0a0f 70%);
+    }
+
+    #gameCanvas {
+      display: block;
+      touch-action: manipulation;
+      max-width: 100vw;
+      max-height: 100vh;
+      background: transparent;
+    }
+
+    .back-button {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(10, 10, 10, 0.65);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .back-button:active {
+      transform: scale(0.96);
+    }
+
+    .score-badge {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 10;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(10, 10, 10, 0.65);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-wrap">
+    <a class="back-button" href="index.html">
+      <i class="fa-solid fa-arrow-left"></i>
+      Назад
+    </a>
+    <div class="score-badge" id="scoreBadge">Счёт: 0</div>
+    <canvas id="gameCanvas"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreBadge = document.getElementById('scoreBadge');
+
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let W = 0;
+    let H = 0;
+
+    function resizeCanvas() {
+      const maxWidth = 480;
+      const cssWidth = Math.min(window.innerWidth, maxWidth);
+      const cssHeight = window.innerHeight;
+
+      canvas.style.width = cssWidth + 'px';
+      canvas.style.height = cssHeight + 'px';
+      canvas.width = Math.floor(cssWidth * dpr);
+      canvas.height = Math.floor(cssHeight * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      W = cssWidth;
+      H = cssHeight;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // --- Константы физики ---
+    const GRAVITY = 1500;
+    const FLAP_VELOCITY = -420;
+    const PIPE_GAP = 190;
+    const PIPE_WIDTH = 64;
+    const PIPE_SPEED = 160;
+    const PIPE_INTERVAL = 1500;
+
+    // --- Состояние игры ---
+    let state = 'ready'; // 'ready' | 'playing' | 'over'
+    let bird = { x: 0, y: 0, vy: 0, radius: 15, rotation: 0 };
+    let pipes = [];
+    let score = 0;
+    let bestScore = Number(localStorage.getItem('flappyBestScore') || 0);
+    let lastTime = 0;
+    let pipeTimer = 0;
+    let stars = [];
+
+    function resetGame() {
+      bird.x = W * 0.3;
+      bird.y = H * 0.45;
+      bird.vy = 0;
+      bird.rotation = 0;
+      pipes = [];
+      score = 0;
+      pipeTimer = 0;
+      state = 'ready';
+      scoreBadge.textContent = 'Счёт: 0';
+    }
+
+    function initStars() {
+      stars = [];
+      for (let i = 0; i < 60; i++) {
+        stars.push({
+          x: Math.random() * W,
+          y: Math.random() * H * 0.6,
+          r: Math.random() * 1.6 + 0.4,
+          a: Math.random() * 0.6 + 0.2
+        });
+      }
+    }
+
+    function spawnPipe() {
+      const margin = 60;
+      const gapCenter = margin + Math.random() * (H - margin * 2 - PIPE_GAP);
+      pipes.push({ x: W + PIPE_WIDTH, gapCenter: gapCenter, passed: false });
+    }
+
+    function flap() {
+      if (state === 'ready') {
+        state = 'playing';
+        bird.vy = FLAP_VELOCITY;
+      } else if (state === 'playing') {
+        bird.vy = FLAP_VELOCITY;
+      } else if (state === 'over') {
+        resetGame();
+      }
+    }
+
+    function endGame() {
+      state = 'over';
+      if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem('flappyBestScore', String(bestScore));
+      }
+    }
+
+    function update(dt) {
+      if (state !== 'playing') return;
+
+      bird.vy += GRAVITY * dt;
+      bird.y += bird.vy * dt;
+      bird.rotation = Math.max(-0.5, Math.min(1.2, bird.vy / 500));
+
+      if (bird.y - bird.radius < 0) {
+        bird.y = bird.radius;
+        bird.vy = 0;
+      }
+      if (bird.y + bird.radius > H) {
+        bird.y = H - bird.radius;
+        endGame();
+      }
+
+      pipeTimer += dt * 1000;
+      if (pipeTimer >= PIPE_INTERVAL) {
+        pipeTimer = 0;
+        spawnPipe();
+      }
+
+      for (let i = pipes.length - 1; i >= 0; i--) {
+        const p = pipes[i];
+        p.x -= PIPE_SPEED * dt;
+
+        if (!p.passed && p.x + PIPE_WIDTH < bird.x) {
+          p.passed = true;
+          score++;
+          scoreBadge.textContent = 'Счёт: ' + score;
+        }
+
+        const topEnd = p.gapCenter - PIPE_GAP / 2;
+        const bottomStart = p.gapCenter + PIPE_GAP / 2;
+
+        const withinX = bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + PIPE_WIDTH;
+        if (withinX) {
+          if (bird.y - bird.radius < topEnd || bird.y + bird.radius > bottomStart) {
+            endGame();
+          }
+        }
+
+        if (p.x + PIPE_WIDTH < -10) {
+          pipes.splice(i, 1);
+        }
+      }
+    }
+
+    function drawBackground() {
+      ctx.clearRect(0, 0, W, H);
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#1e1b4b');
+      grad.addColorStop(0.7, '#0a0a0f');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.save();
+      stars.forEach((s) => {
+        ctx.globalAlpha = s.a;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    function drawPipes() {
+      pipes.forEach((p) => {
+        const topEnd = p.gapCenter - PIPE_GAP / 2;
+        const bottomStart = p.gapCenter + PIPE_GAP / 2;
+
+        const grad = ctx.createLinearGradient(p.x, 0, p.x + PIPE_WIDTH, 0);
+        grad.addColorStop(0, '#833AB4');
+        grad.addColorStop(1, '#ec4899');
+        ctx.fillStyle = grad;
+
+        ctx.fillRect(p.x, 0, PIPE_WIDTH, topEnd);
+        ctx.fillRect(p.x, bottomStart, PIPE_WIDTH, H - bottomStart);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(p.x, 0, PIPE_WIDTH, topEnd);
+        ctx.strokeRect(p.x, bottomStart, PIPE_WIDTH, H - bottomStart);
+      });
+    }
+
+    function roundRectPath(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function drawBird() {
+      ctx.save();
+      ctx.translate(bird.x, bird.y);
+      ctx.rotate(bird.rotation);
+
+      const bodyW = bird.radius * 1.5;
+      const bodyH = bird.radius * 2.3;
+      const bodyX = -bodyW / 2;
+      const bodyY = -bodyH / 2 + 3;
+
+      // Кружка с пивом (стекло)
+      roundRectPath(bodyX, bodyY, bodyW, bodyH, 4);
+      ctx.fillStyle = '#f0a202';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Блик на стекле кружки
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(bodyX + 4, bodyY + 7);
+      ctx.lineTo(bodyX + 4, bodyY + bodyH - 6);
+      ctx.stroke();
+
+      // Пена сверху
+      ctx.fillStyle = '#fff8e7';
+      ctx.beginPath();
+      ctx.ellipse(0, bodyY, bodyW / 2, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(-bodyW / 2 + 4, bodyY - 2, 3, 0, Math.PI * 2);
+      ctx.arc(bodyW / 2 - 4, bodyY - 1, 2.5, 0, Math.PI * 2);
+      ctx.arc(0, bodyY - 3.5, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Ручка кружки
+      ctx.strokeStyle = '#f0a202';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(bodyX + bodyW + 3, 2, bodyH / 2 - 4, -Math.PI / 2 - 0.4, Math.PI / 2 + 0.4, false);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawOverlayText() {
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffffff';
+
+      if (state === 'ready') {
+        ctx.font = '700 22px sans-serif';
+        ctx.fillText('Тапните, чтобы начать', W / 2, H * 0.32);
+        ctx.font = '400 14px sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        ctx.fillText('Клик или тап по экрану — взмах', W / 2, H * 0.32 + 26);
+      }
+
+      if (state === 'over') {
+        ctx.font = '700 26px sans-serif';
+        ctx.fillText('Игра окончена', W / 2, H * 0.35);
+        ctx.font = '600 18px sans-serif';
+        ctx.fillText('Счёт: ' + score, W / 2, H * 0.35 + 34);
+        ctx.fillText('Рекорд: ' + bestScore, W / 2, H * 0.35 + 60);
+        ctx.font = '400 14px sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        ctx.fillText('Тапните, чтобы сыграть снова', W / 2, H * 0.35 + 92);
+      }
+    }
+
+    function render() {
+      drawBackground();
+      drawPipes();
+      drawBird();
+      drawOverlayText();
+    }
+
+    function loop(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      let dt = (timestamp - lastTime) / 1000;
+      dt = Math.min(dt, 0.033);
+      lastTime = timestamp;
+
+      update(dt);
+      render();
+
+      requestAnimationFrame(loop);
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      flap();
+    });
+
+    resizeCanvas();
+    initStars();
+    resetGame();
+    requestAnimationFrame(loop);
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      initStars();
+    });
+  </script>
+</body>
+</html>
